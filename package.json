@@ -10,6 +10,7 @@
     "crux"
   ],
   "author": "James Hoekzema",
+  "repository": "https://github.com/Hoekz/crux",
   "license": "ISC",
   "dependencies": {
     "mime-types": "^2.1.11"
