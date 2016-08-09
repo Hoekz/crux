@@ -14,28 +14,31 @@ module.exports = function(fn, thisArg){
 };
 
 module.exports.map = function(array){
-	var len = array.length;
-	return new Promise(function(resolve, reject){
-		if(!len) return resolve();
-		var count = 0, results = [];
+	var len = array.length, count = 0, results = [];
+	var res = null;
+	var prom = new Promise(function(resolve, reject){
+		res = resolve;
+		if(!len) resolve(results);
+	});
 
-		var store = function(data, index){
-			count++;
-			results[index] = data;
+	var store = function(data, index){
+		count++;
+		results[index] = data;
 
-			if(count == len){
-				resolve(results);
-			}
-		};
+		if(count == len){
+			res(results);
+		}
+	};
 
-		array.forEach(function(promise, index){
-			promise.then(function(data){
-				store(data, index);
-			}, function(data){
-				store(data, index);
-			});
+	array.forEach(function(promise, index){
+		promise.then(function(data){
+			store(data, index);
+		}, function(data){
+			store(data, index);
 		});
 	});
+
+	return prom;
 };
 
 module.exports.data = function(data){
