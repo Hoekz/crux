@@ -1,6 +1,16 @@
 var cls = require('./crux.class');
 var copy = require('./crux.copy');
 
+var createMatch = function(pattern){
+	if(!pattern){
+		return /^+*$/;
+	}
+
+	return new RegExp('^' + pattern.split('.').map(function(term){
+		return term.replace(/\*/g, '+*');
+	}).join('\\.') + '$');
+};
+
 var has = function(data, key){
 	if(data === undefined){
 		//the key is unreachable
@@ -57,7 +67,7 @@ var get = function(data, key){
 	return get(data[key[0]], key.slice(1));
 };
 
-var set = function(data, key, value){
+var set = function(data, key, value, rules){
 	if(key[0] && key[0].match(/\*/)) throw Error('set does not support wildcard');
 
 	if(!(data instanceof Object) && key.length){
@@ -115,6 +125,10 @@ var model = module.exports = cls({
 		}else{
 			this.data = {};
 		}
+
+		this.rules = {
+			set: []
+		};
 	},
 	has: function(key){
 		return has(this.data, key);
@@ -122,11 +136,12 @@ var model = module.exports = cls({
 	set: function(key, val){
 		if(arguments.length == 1 && key instanceof Object){
 			for(var prop in key){
-				set(this.data, prop, key[prop]);
+				this.set(prop, key[prop]);
 			}
 		}else{
-			set(this.data, key, val);
+			set(this.data, key, val, this.rules);
 		}
+
 		return this;
 	},
 	get: function(key){
@@ -136,6 +151,31 @@ var model = module.exports = cls({
 		return model({
 			data: this.data,
 			key: key
+		});
+	},
+	rule: function(pattern, cmd, listener){
+		if(arguments.length == 1){
+			throw Error('not enough args');
+		}
+
+		if(arguments.length == 2){
+			listener = cmd;
+			cmd = pattern;
+		}
+
+		if(!(listener instanceof Function)){
+			throw Error('rule is not a function');
+		}
+
+		this.rules[cmd].push({
+			pattern: createMatch(pattern),
+			listener: listener
+		})
+		return this;
+	},
+	copy: function(){
+		return model({
+			data: copy(this.data)
 		});
 	}
 });

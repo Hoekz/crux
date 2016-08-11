@@ -1,5 +1,6 @@
 var suite = require('../crux.test');
 var model = require('../crux.model');
+var copy = require('../crux.copy');
 
 suite('crux.model Tests', function(test){
 
@@ -193,6 +194,23 @@ suite('crux.model Tests', function(test){
 		});
 	});
 
+	test.suite('model.rule Tests', function(test){
+		test('should use a rule to block a set', function(assert){
+			myModel = model();
+
+			myModel.rule('set', function(event){
+				return false;
+			});
+
+			try{
+				myModel.set('prop', 'val');
+				return assert.fail('allowed set of data');
+			}catch(e){}
+
+			assert.done();
+		});
+	});
+
 	test.suite('model.ref Tests', function(test){
 		test('should return a model of the ref', function(assert){
 			var myModel = model();
@@ -264,6 +282,35 @@ suite('crux.model Tests', function(test){
 				return assert.fail('did not allow ref to object');
 			}
 
+			assert.done();
+		});
+	});
+
+	test.suite('model.copy Tests', function(test){
+		test('should produce a deep copy of the data', function(assert){
+			var data = {a: {b: {c: 'd'}, c: {d: 123}}, c: {d: true}};
+			var myModel = model({
+				data: data
+			});
+
+			var modelCopy = myModel.copy();
+
+			assert.deepEqual(modelCopy.get(), data);
+			assert.notEqual(modelCopy.get(), data);
+			assert.done();
+		});
+
+		test('should be able to use copy command correctly', function(assert){
+			var data = {a: {b: {c: 'd'}, c: {d: 123}}, c: {d: true}};
+			var myModel = model({
+				data: data
+			});
+
+			var modelCopy = myModel.copy();
+			var copyModel = copy(myModel);
+
+			assert.deepEqual(copyModel.get(), modelCopy.get());
+			assert.notEqual(copyModel.get(), modelCopy.get());
 			assert.done();
 		});
 	});
